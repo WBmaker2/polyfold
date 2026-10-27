@@ -1,0 +1,40 @@
+:root {
+  color-scheme: light;
+  --paper: #f7f2e7;
+  --paper-2: #fffaf0;
+  --paper-3: #efe4cf;
+  --ink: #123f3c;
+  --ink-2: #1d514b;
+  --ink-soft: #4c6a64;
+  --ink-faint: rgba(18, 63, 60, 0.12);
+  --ink-ghost: rgba(18, 63, 60, 0.06);
+  --coral: #df6a50;
+  --coral-deep: #b8462c;
+  --coral-soft: #f6d8ce;
+  --gold: #dfa83d;
+  --gold-deep: #b8862c;
+  --gold-soft: #f5e1b4;
+  --teal: #2f8279;
+  --teal-deep: #1f5f58;
+  --sky: #5586b3;
+  --plum: #8a6a9e;
+  --olive: #83955a;
+  --danger: #b8462c;
+  --stage-1: #0d3633;
+  --stage-2: #092825;
+  --cream: #fff8eb;
+  --radius-xl: 30px;
+  --radius-lg: 24px;
+  --radius-md: 18px;
+  --radius-sm: 12px;
+  --shadow-panel: 0 24px 60px -34px rgba(18, 63, 60, 0.55), 0 1px 0 rgba(255, 255, 255, 0.7) inset;
+  --shadow-float: 0 18px 42px -22px rgba(9, 40, 37, 0.6);
+  --font-sans:
+    'Apple SD Gothic Neo', 'Pretendard', 'Noto Sans KR', 'Malgun Gothic', system-ui, -apple-system,
+    sans-serif;
+  --font-display:
+    'Iowan Old Style', 'Palatino Linotype', 'Nanum Myeongjo', 'Apple SD Gothic Neo', serif;
+  --font-mono: 'SF Mono', 'Menlo', 'Consolas', monospace;
+  --header-h: 78px;
+  --focus-ring: 3px solid var(--gold);
+}
