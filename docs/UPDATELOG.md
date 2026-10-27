@@ -33,6 +33,7 @@
 ### 배포 준비
 
 - GitHub Actions로 GitHub Pages에 자동 배포되도록 설정했어요. `main` 브랜치에 올리면 단위 테스트·린트·빌드를 거쳐 배포돼요.
+- 배포된 앱은 https://wbmaker2.github.io/polyfold/ 에서 열 수 있어요.
 
 ### 수학과 검증
 
