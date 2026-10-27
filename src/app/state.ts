@@ -2,7 +2,14 @@ import { getSolid } from '../geometry/solids';
 import { validNets } from '../geometry/nets';
 import { CHALLENGES } from '../data/challenges';
 import { loadProgress, type StoredProgress } from '../storage/progress';
-import type { ChallengeSetFilter, MobileTab, Route, Vec3, ViewMode } from '../geometry/types';
+import type {
+  ChallengeSetFilter,
+  FoldSpeed,
+  MobileTab,
+  Route,
+  Vec3,
+  ViewMode,
+} from '../geometry/types';
 
 export interface SectionState {
   enabled: boolean;
@@ -13,6 +20,7 @@ export interface SectionState {
 export interface PreferencesState {
   reducedMotion: boolean;
   showFormulas: boolean;
+  foldSpeed: FoldSpeed;
 }
 
 export interface TeacherState {
@@ -94,6 +102,7 @@ export function createInitialState(): AppState {
     preferences: {
       reducedMotion,
       showFormulas: stored?.preferences.showFormulas ?? true,
+      foldSpeed: stored?.preferences.foldSpeed ?? 'normal',
     },
     teacher: { filter: 'all', showAnswers: false },
     mobileTab: 'fold',

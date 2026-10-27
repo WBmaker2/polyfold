@@ -237,11 +237,11 @@ export class Stage {
   }
 
   private sectionText(state: AppState, viewModel: ViewModel): string {
-    if (!state.section.enabled) return '절단면이 꺼져 있어요.';
+    if (!state.section.enabled) return '단면 보기가 꺼져 있어요. 켜면 잘린 모양이 보여요.';
     if (state.route === 'challenge' && !state.revealed) {
-      return '절단면의 단면 모양은 답을 제출한 뒤 확인할 수 있어요.';
+      return '단면의 모양은 답을 제출한 뒤 확인할 수 있어요.';
     }
-    if (!viewModel.crossSection) return '이 절단면에서는 단면이 생기지 않아요.';
+    if (!viewModel.crossSection) return '이 위치에서는 단면이 생기지 않아요.';
     return `단면 · ${viewModel.crossSection.shapeNameKo} · 넓이 ${formatNumber(
       viewModel.crossSection.area,
     )}`;
@@ -268,7 +268,7 @@ export class Stage {
     }
     if (state.section.enabled) {
       if (state.route === 'challenge' && !state.revealed) {
-        parts.push('절단면이 켜져 있고 단면의 모양은 아직 공개되지 않았습니다.');
+        parts.push('단면 보기가 켜져 있고 단면의 모양은 아직 공개되지 않았습니다.');
       } else if (viewModel.crossSection) {
         parts.push(
           `단면은 ${viewModel.crossSection.shapeNameKo}이고 넓이는 ${formatNumber(
@@ -276,7 +276,7 @@ export class Stage {
           )}입니다.`,
         );
       } else {
-        parts.push('절단면이 입체를 지나지 않아 단면이 없습니다.');
+        parts.push('자르는 면이 입체를 지나지 않아 단면이 없습니다.');
       }
     }
     if (viewModel.layout.noteKo && (state.route !== 'challenge' || state.revealed)) {

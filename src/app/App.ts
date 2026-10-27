@@ -3,7 +3,14 @@ import { normalizePlane } from '../geometry/crossSection';
 import { validNets } from '../geometry/nets';
 import { getSolid } from '../geometry/solids';
 import { faceById } from '../geometry/solids';
-import type { ChallengeSetFilter, MobileTab, Route, Vec3, ViewMode } from '../geometry/types';
+import type {
+  ChallengeSetFilter,
+  FoldSpeed,
+  MobileTab,
+  Route,
+  Vec3,
+  ViewMode,
+} from '../geometry/types';
 import { ExplorePanel } from '../features/explore/ExplorePanel';
 import { ChallengePanel } from '../features/challenge/ChallengePanel';
 import { TeacherPanel } from '../features/teacher/TeacherPanel';
@@ -20,7 +27,11 @@ import {
 } from './state';
 import { buildViewModel, sectionRange } from './viewModel';
 
-const FOLD_DURATION = 1500;
+const FOLD_DURATIONS: Record<FoldSpeed, number> = {
+  slow: 5000,
+  normal: 3000,
+  fast: 1500,
+};
 
 export class App {
   private readonly leftHost: HTMLElement;
@@ -183,6 +194,7 @@ export class App {
         onSectionOffset: (offset) => this.setSectionOffset(offset),
         onReducedMotion: (value) => this.setReducedMotion(value),
         onShowFormulas: (value) => this.setShowFormulas(value),
+        onFoldSpeed: (speed) => this.setFoldSpeed(speed),
         onMobileTab: (tab) => this.setMobileTab(tab),
         onOpenChallenge: () => this.openChallenge(),
         onStartChallenge: (index) => this.startChallenge(index),
@@ -336,10 +348,11 @@ export class App {
     this.stopFold();
     const state = getState();
     const from = state.viewMode === 'net' || state.foldT >= 0.999 ? 0 : state.foldT;
+    const duration = FOLD_DURATIONS[state.preferences.foldSpeed];
     const start = performance.now();
     setState({ playing: true, viewMode: '3d', foldT: from });
     const tick = (now: number) => {
-      const next = Math.min(1, from + (now - start) / FOLD_DURATION);
+      const next = Math.min(1, from + (now - start) / duration);
       setState({ foldT: next });
       if (next < 1) {
         this.foldRaf = requestAnimationFrame(tick);
@@ -411,7 +424,7 @@ export class App {
         offset: Math.min(max, Math.max(min, 0)),
       },
     });
-    this.announce('절단면 방향을 바꿨어요.');
+    this.announce('단면을 자르는 방향을 바꿨어요.');
   }
 
   private setSectionOffset(offset: number): void {
@@ -431,6 +444,16 @@ export class App {
     setState((state) => ({
       preferences: { ...state.preferences, showFormulas: value },
     }));
+  }
+
+  private setFoldSpeed(speed: FoldSpeed): void {
+    const wasPlaying = getState().playing;
+    setState((state) => ({
+      preferences: { ...state.preferences, foldSpeed: speed },
+    }));
+    if (wasPlaying) this.startFold();
+    const label = speed === 'slow' ? '느리게' : speed === 'fast' ? '빠르게' : '보통';
+    this.announce(`접기 속도를 ${label}로 바꿨어요.`);
   }
 
   private setMobileTab(tab: MobileTab): void {
@@ -596,7 +619,7 @@ export class App {
   private sectionAnnouncement(): string {
     const state = getState();
     const viewModel = buildViewModel(state);
-    if (!viewModel.crossSection) return '절단면이 입체를 지나지 않아 단면이 없어요.';
+    if (!viewModel.crossSection) return '자르는 면이 입체를 지나지 않아 단면이 없어요.';
     return `단면은 ${viewModel.crossSection.shapeNameKo}이고 넓이는 ${viewModel.crossSection.area.toFixed(2)}예요.`;
   }
 

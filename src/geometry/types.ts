@@ -155,6 +155,7 @@ export interface Challenge {
   difficulty: 1 | 2 | 3;
 }
 
+export type FoldSpeed = 'slow' | 'normal' | 'fast';
 export type Route = 'explore' | 'challenge' | 'teacher';
 export type ViewMode = '3d' | 'net';
 export type ChallengeSetFilter = 'all' | 'basic' | 'advanced';

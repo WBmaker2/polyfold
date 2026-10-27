@@ -1,3 +1,5 @@
+import type { FoldSpeed } from '../geometry/types';
+
 export const PROGRESS_KEY = 'polyfold.progress.v1';
 
 export interface StoredProgress {
@@ -9,6 +11,7 @@ export interface StoredProgress {
   preferences: {
     reducedMotion: boolean;
     showFormulas: boolean;
+    foldSpeed?: FoldSpeed;
   };
 }
 
@@ -33,6 +36,10 @@ export function loadProgress(): StoredProgress | null {
       preferences: {
         reducedMotion: parsed.preferences?.reducedMotion ?? false,
         showFormulas: parsed.preferences?.showFormulas ?? true,
+        foldSpeed:
+          parsed.preferences?.foldSpeed === 'slow' || parsed.preferences?.foldSpeed === 'fast'
+            ? parsed.preferences.foldSpeed
+            : 'normal',
       },
     };
   } catch {

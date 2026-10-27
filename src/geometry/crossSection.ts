@@ -200,6 +200,6 @@ export function computeCrossSection(
 }
 
 export function describeCrossSection(section: CrossSection | null): string {
-  if (!section) return '단면이 없어요. 절단면이 입체를 지나지 않아요.';
+  if (!section) return '단면이 없어요. 자르는 면이 입체를 지나지 않아요.';
   return `${section.shapeNameKo}, 둘레 ${formatNumber(section.perimeter)}, 넓이 ${formatNumber(section.area)}`;
 }

@@ -28,6 +28,17 @@ test('tablet stacks the tool panel below the stage', async ({ page }, testInfo) 
     () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
   );
   expect(overflow).toBeLessThanOrEqual(1);
+
+  await page.getByRole('button', { name: /느리게/ }).scrollIntoViewIfNeeded();
+  const stageBox = await page.locator('.stage').evaluate((element) => {
+    const rect = element.getBoundingClientRect();
+    return { top: rect.top + window.scrollY, bottom: rect.bottom + window.scrollY };
+  });
+  const foldBox = await page.locator('.card[data-card="fold"]').evaluate((element) => {
+    const rect = element.getBoundingClientRect();
+    return { top: rect.top + window.scrollY };
+  });
+  expect(foldBox.top).toBeGreaterThanOrEqual(stageBox.bottom - 2);
 });
 
 test('desktop keeps the gallery and tools beside the stage', async ({ page }, testInfo) => {

@@ -1,6 +1,12 @@
 import { CHALLENGES } from '../../data/challenges';
 import { SOLIDS } from '../../geometry/solids';
-import type { CrossSection, MobileTab, SolidDefinition, Vec3 } from '../../geometry/types';
+import type {
+  CrossSection,
+  FoldSpeed,
+  MobileTab,
+  SolidDefinition,
+  Vec3,
+} from '../../geometry/types';
 import { formatNumber } from '../../geometry/vec';
 import type { AppState } from '../../app/state';
 import type { ViewModel } from '../../app/viewModel';
@@ -27,6 +33,7 @@ export interface ExploreCallbacks {
   onSectionOffset: (offset: number) => void;
   onReducedMotion: (value: boolean) => void;
   onShowFormulas: (value: boolean) => void;
+  onFoldSpeed: (speed: FoldSpeed) => void;
   onMobileTab: (tab: MobileTab) => void;
   onOpenChallenge: () => void;
   onStartChallenge: (index: number) => void;
@@ -57,6 +64,7 @@ export class ExplorePanel {
   private readonly foldOutput: HTMLOutputElement;
   private readonly playButton: HTMLButtonElement;
   private readonly reducedMotion: HTMLInputElement;
+  private readonly foldSpeedButtons = new Map<FoldSpeed, HTMLButtonElement>();
   private readonly faceText: HTMLElement;
   private readonly clearFace: HTMLButtonElement;
   private readonly sectionToggle: HTMLInputElement;
@@ -125,6 +133,9 @@ export class ExplorePanel {
     this.foldSlider.addEventListener('input', () =>
       this.callbacks.onFold(Number(this.foldSlider.value)),
     );
+    this.foldSlider.addEventListener('pointerdown', () => {
+      this.callbacks.onFold(Number(this.foldSlider.value));
+    });
     this.playButton.addEventListener('click', () => this.callbacks.onTogglePlay());
     this.right
       .querySelector('#fold-reset')!
@@ -174,7 +185,14 @@ export class ExplorePanel {
     setHidden(this.netNote, !viewModel.layout.noteKo);
 
     this.foldSlider.value = String(state.foldT);
-    setText(this.foldOutput, `${Math.round(state.foldT * 100)}%`);
+    const percent = Math.round(state.foldT * 100);
+    setText(this.foldOutput, `${percent}%`);
+    this.foldSlider.setAttribute('aria-valuetext', `${percent}% 접힘`);
+    for (const [speed, buttonNode] of this.foldSpeedButtons) {
+      const active = speed === state.preferences.foldSpeed;
+      buttonNode.classList.toggle('is-active', active);
+      buttonNode.setAttribute('aria-pressed', String(active));
+    }
     this.playButton.innerHTML = state.playing ? ICONS.pause : ICONS.play;
     this.playButton.append(
       document.createTextNode(
@@ -310,6 +328,10 @@ export class ExplorePanel {
     const note = h('p', 'note');
     note.id = 'net-note';
     metaRow.append(meta);
+    const progressHead = h('div', 'progress-head');
+    const progressHint = h('span', 'progress-hint', '막대를 드래그해 조절하세요');
+    progressHint.id = 'fold-slider-hint';
+    progressHead.append(h('span', 'field-label', '접는 정도'), progressHint);
     const foldRow = h('div', 'range-row');
     const slider = h('input', 'range');
     slider.type = 'range';
@@ -317,13 +339,37 @@ export class ExplorePanel {
     slider.min = '0';
     slider.max = '1';
     slider.step = '0.01';
-    slider.value = '0';
-    slider.setAttribute('aria-label', '접기 정도');
+    slider.value = '1';
+    slider.setAttribute('aria-label', '접는 정도');
+    slider.setAttribute('aria-valuetext', '100% 접힘');
+    slider.setAttribute('aria-describedby', 'fold-slider-hint');
+    slider.title = '드래그해서 접는 정도를 조절하세요';
     const output = h('output', 'range-value');
     output.id = 'fold-output';
     output.setAttribute('for', 'fold-slider');
-    output.textContent = '0%';
+    output.textContent = '100%';
     foldRow.append(slider, output);
+    const speedField = h('div', 'field speed-field');
+    speedField.append(h('span', 'field-label', '접기 속도'));
+    const speedRow = h('div', 'segmented segmented-wrap');
+    speedRow.setAttribute('role', 'group');
+    speedRow.setAttribute('aria-label', '접기 속도');
+    const speeds: { speed: FoldSpeed; label: string; title: string }[] = [
+      { speed: 'slow', label: '느리게', title: '약 5초 동안 접어요' },
+      { speed: 'normal', label: '보통', title: '약 3초 동안 접어요' },
+      { speed: 'fast', label: '빠르게', title: '약 1.5초 동안 접어요' },
+    ];
+    for (const item of speeds) {
+      const speedButton = h('button', 'segmented-btn', item.label);
+      speedButton.type = 'button';
+      speedButton.dataset.foldSpeed = item.speed;
+      speedButton.title = item.title;
+      speedButton.setAttribute('aria-label', `${item.label}, ${item.title}`);
+      speedButton.addEventListener('click', () => this.callbacks.onFoldSpeed(item.speed));
+      this.foldSpeedButtons.set(item.speed, speedButton);
+      speedRow.append(speedButton);
+    }
+    speedField.append(speedRow);
     const buttons = h('div', 'btn-row');
     const play = h('button', 'btn btn-primary btn-pulse');
     play.type = 'button';
@@ -346,7 +392,18 @@ export class ExplorePanel {
     clearButton.type = 'button';
     clearButton.id = 'clear-face';
     faceRow.append(faceText, clearButton);
-    card.append(head, field, metaRow, note, foldRow, buttons, reduce, faceRow);
+    card.append(
+      head,
+      field,
+      metaRow,
+      note,
+      progressHead,
+      foldRow,
+      speedField,
+      buttons,
+      reduce,
+      faceRow,
+    );
     return card;
   }
 
@@ -363,11 +420,12 @@ export class ExplorePanel {
     input.id = 'section-toggle';
     const track = h('span', 'switch');
     track.setAttribute('aria-hidden', 'true');
-    toggle.append(input, h('span', 'switch-label', '절단면 보기'), track);
+    toggle.append(input, h('span', 'switch-label', '단면 보기'), track);
+    const sectionHint = h('p', 'note', '켜면 자르는 면과 잘린 단면이 함께 보여요.');
 
     const presets = h('div', 'segmented segmented-wrap');
     presets.setAttribute('role', 'group');
-    presets.setAttribute('aria-label', '절단면 방향');
+    presets.setAttribute('aria-label', '자르는 방향');
     for (const preset of SECTION_PRESETS) {
       const buttonNode = h('button', 'segmented-btn', preset.label);
       buttonNode.type = 'button';
@@ -378,7 +436,7 @@ export class ExplorePanel {
     const offset = h('input', 'range');
     offset.type = 'range';
     offset.id = 'section-offset';
-    offset.setAttribute('aria-label', '절단면 위치');
+    offset.setAttribute('aria-label', '자르는 위치');
     const offsetValue = h('output', 'range-value');
     offsetValue.id = 'section-offset-value';
     offsetValue.setAttribute('for', 'section-offset');
@@ -389,7 +447,7 @@ export class ExplorePanel {
     const resultHead = h('div', 'section-result-head');
     const resultTitle = h('strong', 'section-shape');
     resultTitle.id = 'section-meta';
-    resultTitle.textContent = '단면을 켜 보세요';
+    resultTitle.textContent = '단면 보기를 켜 보세요';
     resultHead.append(resultTitle);
     const canvas = h('canvas', 'section-canvas');
     canvas.id = 'section-canvas';
@@ -397,7 +455,7 @@ export class ExplorePanel {
     canvas.height = 440;
     canvas.setAttribute('aria-hidden', 'true');
     result.append(resultHead, canvas);
-    card.append(head, toggle, presets, offsetRow, result);
+    card.append(head, toggle, sectionHint, presets, offsetRow, result);
     return card;
   }
 
@@ -489,7 +547,7 @@ export class ExplorePanel {
     if (key === this.sectionKey) return;
     this.sectionKey = key;
     if (!state.section.enabled) {
-      setText(this.sectionMeta, '절단면을 켜 보세요');
+      setText(this.sectionMeta, '단면 보기를 켜 보세요');
       this.sectionResult.classList.remove('has-section');
       drawEmptySection(this.sectionCanvas);
       return;
@@ -639,7 +697,7 @@ function drawEmptySection(canvas: HTMLCanvasElement): void {
   ctx.fillStyle = 'rgba(18, 63, 60, 0.5)';
   ctx.font = '600 13px "Apple SD Gothic Neo", "Malgun Gothic", sans-serif';
   ctx.textAlign = 'center';
-  ctx.fillText('절단면을 지나가게 움직여 보세요', 160, 114);
+  ctx.fillText('단면 보기를 켜고 위치를 움직여 보세요', 160, 114);
 }
 
 function drawHiddenSection(canvas: HTMLCanvasElement): void {
